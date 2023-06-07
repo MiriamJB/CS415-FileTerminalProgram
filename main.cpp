@@ -3,6 +3,8 @@
 #include <string>
 #include  <bits/stdc++.h>
 #include <filesystem>
+#include <sstream>
+
 
 namespace fs = std::filesystem;
 
@@ -20,13 +22,9 @@ void userManuel() {
         << "\n";
 }
 
-void createMenu() {
-
-}
-
 int main() {
-    std::string command;
     std::string input;
+    std::string command[2];
     bool running = true;
     char* prompt = ">";
     
@@ -40,14 +38,24 @@ int main() {
 
         //read input from the user
         std::getline(std::cin, input);
-        command = input; /////////////////////TODO: get first word from input
+
+        //split the input and put it into the command variable
+        int i = 0;
+        std::stringstream ssin(input);
+        while (ssin.good() && i < 2){
+            ssin >> command[i];
+            ++i;
+        }
     
         if (input == "") {
             //if the user simply presses enter, it will re-start the loop
         } else if (input == "?" || input == "help") {
             userManuel();
-        } else if (input == "create") {
-            createMenu();
+        } else if (command[0] == "create") {
+            std::cout << "File \"" << command[1] << "\" created.\n";
+        } else if (command[0] == "read") {
+        } else if (command[0] == "write") {
+        } else if (command[0] == "delete") {
         } else if (input == "quit") {
             running = false;
         } else {
