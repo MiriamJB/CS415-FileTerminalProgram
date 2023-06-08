@@ -7,14 +7,12 @@
 
 
 namespace fs = std::filesystem;
-std::string fileDirectory[50];
-int fileIndex;
 
 //displays avalable commands
 void userManuel() {
     std::cout
         << "-------------------------------USER MANUEL-------------------------------\n"
-        << "                  ***Commands ARE case-sensitive***\n"
+        << "                   ***Commands ARE case-sensitive***\n"
         << "? OR help                                        Displays the user manuel\n"
         << "directory                                Lists all files in the directory\n"
         << "create <fileName>                    Creates a file with the desired name\n"
@@ -26,32 +24,34 @@ void userManuel() {
         << std::endl;
 }
 
-//prints all the files that are stored in fileDirectory
+//prints all the files that are stored in the "files" folder
 void showFileDirectory() {
-    if (fileIndex == 0) {
-        std::cout << "The file directory is empty." << std::endl;
+    std::vector<std::string> files;
+
+    for (const auto& entry : fs::directory_iterator("files")) {
+        if (entry.is_regular_file()) {
+            files.push_back(entry.path().filename().string());
+        }
+    }
+
+    if (files.empty()) {
+        std::cout << "The file directory is empty.\n" << std::endl;
     } else {
         std::cout << "------------------------------FILE DIRECTORY------------------------------" << std::endl;
-        for (int i = 0; i < fileIndex; i++)
-        std::cout << fileDirectory[i] << std::endl;
+        for (const auto& file : files)
+            std::cout << file << std::endl;
         std::cout << "--------------------------------------------------------------------------\n" << std::endl;
     }
 }
 
 //will create a file in the "files" folder
 void createFile(const std::string& fileName) {
-    if (fileIndex > 50) {
-        std::cerr << "ERROR: could not create \"" << fileName << "\". The directory cannot hold more than 50 files.\n" << std::endl; 
+    std::ofstream file("files/" + fileName);
+    if (file) {
+        std::cout << "\"" << fileName << "\" created successfully.\n" << std::endl;
+        file.close();
     } else {
-        std::ofstream file("files/" + fileName);
-        if (file) {
-            std::cout << fileName << " created successfully.\n" << std::endl;
-            file.close();
-            fileDirectory[fileIndex] = fileName;
-            fileIndex++;
-        } else {
-            std::cerr << "ERROR: failed to create \"" << fileName << "\".\n" << std::endl;
-        }
+        std::cerr << "ERROR: failed to create \"" << fileName << "\".\n" << std::endl;
     }
 }
 
@@ -62,9 +62,8 @@ void readFile(const std::string& fileName) {
         std::cout << "\nExisting content of \"" << fileName << "\":" << std::endl;
         std::cout << "--------------------------------------------------------------------------" << std::endl;
         std::string line;
-        while (std::getline(file, line)) {
+        while (std::getline(file, line))
             std::cout << line << std::endl;
-        }
         std::cout << "--------------------------------------------------------------------------\n" << std::endl;
         file.close();
     } else {
@@ -88,7 +87,7 @@ void writeFile(const std::string& fileName) {
 
         content.clear();
         while (std::getline(std::cin, line)) {
-            if (line == "SAVE") {
+            if (line == "SAVE" || line == "save") {
                 std::ofstream file("files/" + fileName);
                 file << content;
                 std::cout << "Content saved to file \"" << fileName << "\".\n" << std::endl;
@@ -104,31 +103,35 @@ void writeFile(const std::string& fileName) {
 
 //asks if the user is sure about deletion and then deletes the file accordingly
 void deleteFile(const std::string& fileName) {
-    std::cout << "Are you sure you want to delete \"" << fileName << "\"? (Y/N) ";
-    std::string response;
-    std::getline(std::cin, response);
-
-    if (response == "N" || response == "n") {
-        std::cout << "File \"" << fileName << "\" has NOT been deleted.\n" << std::endl;
-    } else if (response == "Y" || response == "y") {
-        if (fs::remove("files/" + fileName)) {
-            std::cout << "File \"" << fileName << "\" has been deleted.\n" << std::endl;
-        } else {
-        std::cerr << "ERROR: failed to delete file: \"" << fileName << "\".\n" << std::endl;
-        }
-    } else {
-        std::cerr << "ERROR: invalid response.\n" << std::endl;
-    }
-
+    std::ifstream file("files/" + fileName);
     
+    if (file) {
+        file.close();
+        std::cout << "Are you sure you want to delete \"" << fileName << "\"? (Y/N) ";
+        std::string response;
+        std::getline(std::cin, response);
+
+        if (response == "N" || response == "n") {
+            std::cout << "File \"" << fileName << "\" has NOT been deleted.\n" << std::endl;
+        } else if (response == "Y" || response == "y" || response == "") {
+            if (fs::remove("files/" + fileName)) {
+                std::cout << "File \"" << fileName << "\" has been deleted.\n" << std::endl;
+            } else {
+            std::cerr << "ERROR: failed to delete file: \"" << fileName << "\".\n" << std::endl;
+            }
+        } else {
+            std::cerr << "ERROR: invalid response.\n" << std::endl;
+        }
+
+    } else {
+        std::cerr << "ERROR: invalid file name.\n" << std::endl;
+    }  
 }
 
 int main() {
     std::string input;
     std::string splitInput[2];
     bool running = true;
-    char* prompt = "> ";
-    fileIndex = 0;
     
     //welcome message
     std::cout << R"(
@@ -146,7 +149,7 @@ int main() {
     //this is the loop that runs the program
     while (running) {
         //the loop starts by printing out the prompt
-        std::cout << prompt;
+        std::cout << "> ";
 
         //read input from the user
         std::getline(std::cin, input);
