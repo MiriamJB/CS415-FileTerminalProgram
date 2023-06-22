@@ -7,20 +7,32 @@
 
 
 namespace fs = std::filesystem;
+std::string currentDirectory = "";
+std::string directory = "files"; 
+////TODO: figure out how to subtract from strings
+
+//creates a directory called "files" to hold the files
+void startup() {
+    if (!fs::exists(directory)) {
+        fs::create_directory(directory);
+    }
+}
 
 //displays avalable commands
 void userManuel() {
     std::cout
-        << "-------------------------------USER MANUEL-------------------------------\n"
+        << "-----------------------------------USER MANUEL-----------------------------------\n"
         << "                   ***Commands ARE case-sensitive***\n"
-        << "? OR help                                        Displays the user manuel\n"
-        << "directory                                Lists all files in the directory\n"
-        << "create <fileName>                    Creates a file with the desired name\n"
-        << "read <fileName>                  Shows the contents of the specified file\n"
-        << "write <fileName>                             Writes to the specified file\n"
-        << "delete <fileName>                              Deletes the specified file\n"
-        << "quit                                      Stops the File Terminal Program\n"
-        << "-------------------------------------------------------------------------\n"
+        << "? OR help                                                Displays the user manuel\n"
+        << "directory                                        Lists all files in the directory\n"
+        << "create <fileName>                          Creates a file with the specified name\n"
+        << "read <fileName>                          Shows the contents of the specified file\n"
+        << "write <fileName>                                     Writes to the specified file\n"
+        << "delete <fileName>                                      Deletes the specified file\n"
+        << "encrypt <fileName>                                    Encrypts the specified file\n"
+        << "decrypt <fileName>                                    Decrypts the specified file\n"
+        << "quit                                              Stops the File Terminal Program\n"
+        << "---------------------------------------------------------------------------------\n"
         << std::endl;
 }
 
@@ -28,7 +40,7 @@ void userManuel() {
 void showFileDirectory() {
     std::vector<std::string> files;
 
-    for (const auto& entry : fs::directory_iterator("files")) {
+    for (const auto& entry : fs::directory_iterator(directory)) {
         if (entry.is_regular_file()) {
             files.push_back(entry.path().filename().string());
         }
@@ -46,7 +58,7 @@ void showFileDirectory() {
 
 //will create a file in the "files" folder
 void createFile(const std::string& fileName) {
-    std::ofstream file("files/" + fileName);
+    std::ofstream file(directory + "/" + fileName);
     if (file) {
         std::cout << "\"" << fileName << "\" created successfully.\n" << std::endl;
         file.close();
@@ -57,7 +69,7 @@ void createFile(const std::string& fileName) {
 
 //prints the contents of the file
 void readFile(const std::string& fileName) {
-    std::ifstream file("files/" + fileName);
+    std::ifstream file(directory + "/" + fileName);
     if (file) {
         std::cout << "\nExisting content of \"" << fileName << "\":" << std::endl;
         std::cout << "--------------------------------------------------------------------------" << std::endl;
@@ -73,7 +85,7 @@ void readFile(const std::string& fileName) {
 
 //shows the current content of the file and lets the user overwrite it
 void writeFile(const std::string& fileName) {
-    std::ifstream file("files/" + fileName);
+    std::ifstream file(directory + "/" + fileName);
     if (file) {
         std::string content;
         std::string line;
@@ -88,7 +100,7 @@ void writeFile(const std::string& fileName) {
         content.clear();
         while (std::getline(std::cin, line)) {
             if (line == "SAVE" || line == "save") {
-                std::ofstream file("files/" + fileName);
+                std::ofstream file(directory + "/" + fileName);
                 file << content;
                 std::cout << "Content saved to file \"" << fileName << "\".\n" << std::endl;
                 file.close();
@@ -103,7 +115,7 @@ void writeFile(const std::string& fileName) {
 
 //asks if the user is sure about deletion and then deletes the file accordingly
 void deleteFile(const std::string& fileName) {
-    std::ifstream file("files/" + fileName);
+    std::ifstream file(directory + "/" + fileName);
     
     if (file) {
         file.close();
@@ -114,7 +126,7 @@ void deleteFile(const std::string& fileName) {
         if (response == "N" || response == "n") {
             std::cout << "File \"" << fileName << "\" has NOT been deleted.\n" << std::endl;
         } else if (response == "Y" || response == "y" || response == "") {
-            if (fs::remove("files/" + fileName)) {
+            if (fs::remove(directory + "/" + fileName)) {
                 std::cout << "File \"" << fileName << "\" has been deleted.\n" << std::endl;
             } else {
             std::cerr << "ERROR: failed to delete file: \"" << fileName << "\".\n" << std::endl;
@@ -128,10 +140,22 @@ void deleteFile(const std::string& fileName) {
     }  
 }
 
+void encryptFile(const std::string& fileName) {
+    std::ifstream file(directory + "/" + fileName);
+    if (!file) {
+        std::cerr << "ERROR: failed to open file.\n" << std::endl;
+        return;
+    }
+    
+}
+
 int main() {
     std::string input;
     std::string splitInput[2];
     bool running = true;
+
+    //startup procedure
+    startup();
     
     //welcome message
     std::cout << R"(
@@ -148,8 +172,8 @@ int main() {
     
     //this is the loop that runs the program
     while (running) {
-        //the loop starts by printing out the prompt
-        std::cout << "> ";
+        //the loop starts by printing out the prompt that tells them what directory they're in
+        std::cout << currentDirectory << "> ";
 
         //read input from the user
         std::getline(std::cin, input);
@@ -176,6 +200,10 @@ int main() {
             writeFile(splitInput[1]);
         } else if (splitInput[1] != "" && splitInput[0] == "delete") {
             deleteFile(splitInput[1]);
+        } else if (splitInput[1] != "" && splitInput[0] == "encrypt") {
+            encryptFile(splitInput[1]);
+        } else if (splitInput[1] != "" && splitInput[0] == "decrypt") {
+            
         } else if (input == "quit") {
             running = false;
         } else {
