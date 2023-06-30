@@ -22,7 +22,7 @@ void startup() {
 void userManuel() {
     std::cout
         << "-----------------------------------USER MANUEL-----------------------------------\n"
-        << "                   ***Commands ARE case-sensitive***\n"
+        << "                       ***Commands ARE case-sensitive***\n"
         << "? OR help                                                Displays the user manuel\n"
         << "directory                                        Lists all files in the directory\n"
         << "create <fileName>                          Creates a file with the specified name\n"
@@ -89,15 +89,10 @@ void writeFile(const std::string& fileName) {
     if (file) {
         std::string content;
         std::string line;
-        while (std::getline(file, line)) {
-            content += line + "\n";
-        }
-        file.close();
 
         readFile(fileName);
         std::cout << "Enter the modified content. (Type \"SAVE\" to save and exit.)" << std::endl;
 
-        content.clear();
         while (std::getline(std::cin, line)) {
             if (line == "SAVE" || line == "save") {
                 std::ofstream file(directory + "/" + fileName);
@@ -140,18 +135,88 @@ void deleteFile(const std::string& fileName) {
     }  
 }
 
+//encrypts the file using an encryption key given by the user
 void encryptFile(const std::string& fileName) {
+    //test if the file name is valid
     std::ifstream file(directory + "/" + fileName);
     if (!file) {
         std::cerr << "ERROR: failed to open file.\n" << std::endl;
         return;
     }
     
+    //get encryption key and check if it is an int
+    int key;
+    bool done = false;
+    while (!done) {
+        std::cout << "Enter an encryption key: ";
+        std::cin >> key;
+        if (std::cin.fail()) {
+            std::cin.clear();
+            std::cerr << "ERROR: the key must be a whole number." << std::endl;
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
+        } else {
+            done = true;
+            std::cin.ignore(INT_MAX, '\n');
+        }
+    }
+
+    //convert characters in file
+    char c;
+    std::string encryptedText;
+    while (file.get(c)) {
+        encryptedText += (c + key);
+    }
+    file.close();
+
+    //save encrypted text in the original file
+    std::ofstream saveFile(directory + "/" + fileName);
+    saveFile << encryptedText;
+    std::cout << "\"" << fileName << "\" has been encrypted.\n" << std::endl;
+    saveFile.close();
+}
+
+void decryptFile(const std::string& fileName) {
+    //test if the file name is valid
+    std::ifstream file(directory + "/" + fileName);
+    if (!file) {
+        std::cerr << "ERROR: failed to open file.\n" << std::endl;
+        return;
+    }
+    
+    //get encryption key and check if it is an int
+    int key;
+    bool done = false;
+    while (!done) {
+        std::cout << "Enter the encryption key: ";
+        std::cin >> key;
+        if (std::cin.fail()) {
+            std::cin.clear();
+            std::cerr << "ERROR: the key must be a whole number." << std::endl;
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
+        } else {
+            done = true;
+            std::cin.ignore(INT_MAX, '\n');
+        }
+    }
+
+    //convert characters in file
+    char c;
+    std::string encryptedText;
+    while (file.get(c)) {
+        encryptedText += (c - key);
+    }
+    file.close();
+
+    //save encrypted text in the original file
+    std::ofstream saveFile(directory + "/" + fileName);
+    saveFile << encryptedText;
+    std::cout << "\"" << fileName << "\" has been decrypted.\n" << std::endl;
+    saveFile.close();
 }
 
 int main() {
     std::string input;
-    std::string splitInput[2];
+    std::string splitInput[4];
     bool running = true;
 
     //startup procedure
@@ -181,7 +246,7 @@ int main() {
         //split the input and put it into the splitInput variable
         int i = 0;
         std::stringstream ssin(input);
-        while (ssin.good() && i < 2){
+        while (ssin.good() && i < 4){
             ssin >> splitInput[i];
             ++i;
         }
@@ -203,7 +268,7 @@ int main() {
         } else if (splitInput[1] != "" && splitInput[0] == "encrypt") {
             encryptFile(splitInput[1]);
         } else if (splitInput[1] != "" && splitInput[0] == "decrypt") {
-            
+            decryptFile(splitInput[1]);
         } else if (input == "quit") {
             running = false;
         } else {
