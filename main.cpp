@@ -175,6 +175,7 @@ void encryptFile(const std::string& fileName) {
     saveFile.close();
 }
 
+//decrypts file based on a key given by the user
 void decryptFile(const std::string& fileName) {
     //test if the file name is valid
     std::ifstream file(directory + "/" + fileName);
@@ -187,7 +188,7 @@ void decryptFile(const std::string& fileName) {
     int key;
     bool done = false;
     while (!done) {
-        std::cout << "Enter the encryption key: ";
+        std::cout << "Enter the key used for encryption: ";
         std::cin >> key;
         if (std::cin.fail()) {
             std::cin.clear();
@@ -201,15 +202,15 @@ void decryptFile(const std::string& fileName) {
 
     //convert characters in file
     char c;
-    std::string encryptedText;
+    std::string decryptedText;
     while (file.get(c)) {
-        encryptedText += (c - key);
+        decryptedText += (c - key);
     }
     file.close();
 
-    //save encrypted text in the original file
+    //save decrypted text in the original file
     std::ofstream saveFile(directory + "/" + fileName);
-    saveFile << encryptedText;
+    saveFile << decryptedText;
     std::cout << "\"" << fileName << "\" has been decrypted.\n" << std::endl;
     saveFile.close();
 }
